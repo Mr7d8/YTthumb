@@ -1,11 +1,12 @@
 import { useState } from "react";
-import copy from "copy-to-clipboard";
+import AdSenseBanner from "./AdSenseBanner";
 
 const Index = () => {
   const [videoURL, setVideoURL] = useState("");
-  const [thumbnailOptions, setThumbnailOptions] = useState([]);
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
 
-  const getYouTubeThumbnail = (url) => {
+  const getYouTubeThumbnail = async (url) => {
     let regExp = /.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?]*).*/;
     let match = url.match(regExp);
 
@@ -13,23 +14,27 @@ const Index = () => {
       const videoURL = match[1];
       const thumbnailBaseUrl = "http://img.youtube.com/vi/";
 
-      const options = [
-        { resolution: "HD (1280x720)", code: "maxresdefault" },
-        { resolution: "SD (640x480)", code: "sddefault" },
-        { resolution: "Normal (480x360)", code: "hqdefault" },
-        { resolution: "Medium (320x180)", code: "mqdefault" },
-        { resolution: "Low (120x90)", code: "default" },
-      ];
+      const thumbnailUrl = `${thumbnailBaseUrl}${videoURL}/mqdefault.jpg`; // Default quality
 
-      const thumbnailOptions = options.map((option) => ({
-        resolution: option.resolution,
-        url: `${thumbnailBaseUrl}${videoURL}/${option.code}.jpg`,
-      }));
-
-      setThumbnailOptions(thumbnailOptions);
+      setShowPreview(true);
+      setThumbnailUrl(thumbnailUrl);
       setVideoURL("");
     } else {
-      setThumbnailOptions([]);
+      setShowPreview(false);
+      setThumbnailUrl("");
+    }
+  };
+
+  const downloadImage = () => {
+    if (thumbnailUrl) {
+      const a = document.createElement("a");
+      a.href = thumbnailUrl;
+      a.download = "thumbnail.jpg"; // Specify the desired file name and extension
+
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   };
 
@@ -40,7 +45,8 @@ const Index = () => {
           Free Youtube Thumbnail Downloader
         </h1>
         <p className="text-gray-600">
-          Download for FREE high-quality thumbnails from YouTube videos, seamlessly just copy and paste the URL .
+          Download for FREE high-quality thumbnails from YouTube videos,
+          seamlessly just copy and paste the URL.
         </p>
       </header>
       <div className="text-center">
@@ -55,27 +61,27 @@ const Index = () => {
           className="btn-blue mt-2"
           onClick={() => getYouTubeThumbnail(videoURL)}
         >
-          Download Thumbnails
+          Get Thumbnail
         </button>
-      </div>
-      {thumbnailOptions.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Thumbnail Options</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {thumbnailOptions.map((option, index) => (
-              <div key={index} className="thumbnail-option">
-                <img src={option.url} alt={`Thumbnail ${index + 1}`} />
-                <button
-                  className="btn-blue mt-2"
-                  onClick={() => copy(option.url)}
-                >
-                  Copy Image URL
-                </button>
-              </div>
-            ))}
+        {showPreview && (
+          <div className="mt-4 p-4 bg-white rounded">
+            <img
+              src={thumbnailUrl}
+              alt="Thumbnail Preview"
+              width={320}
+              height={180}
+            />
+            <button
+              className="btn-blue mt-2"
+              onClick={downloadImage}
+            >
+              Download Thumbnail
+            </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+      {/* Include the Google AdSense banner component */}
+      <AdSenseBanner />
     </div>
   );
 };
