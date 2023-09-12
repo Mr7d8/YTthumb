@@ -1,12 +1,19 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import AdSenseBanner from "./AdSenseBanner";
 
 const Index = () => {
   const [videoURL, setVideoURL] = useState("");
-  const [thumbnailUrl, setThumbnailUrl] = useState("");
-  const [showPreview, setShowPreview] = useState(false);
+  const [thumbnails, setThumbnails] = useState([]);
 
-  const getYouTubeThumbnail = async (url) => {
+  const options = [
+    { resolution: "HD (1280x720)", code: "maxresdefault" },
+    { resolution: "SD (640x480)", code: "sddefault" },
+    { resolution: "Normal (480x360)", code: "hqdefault" },
+    { resolution: "Medium (320x180)", code: "mqdefault" },
+    { resolution: "Low (120x90)", code: "default" },
+  ];
+
+  const getYouTubeThumbnails = (url) => {
     let regExp = /.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?]*).*/;
     let match = url.match(regExp);
 
@@ -14,28 +21,27 @@ const Index = () => {
       const videoURL = match[1];
       const thumbnailBaseUrl = "http://img.youtube.com/vi/";
 
-      const thumbnailUrl = `${thumbnailBaseUrl}${videoURL}/mqdefault.jpg`; // Default quality
+      const thumbnails = options.map((option) => ({
+        resolution: option.resolution,
+        url: `${thumbnailBaseUrl}${videoURL}/${option.code}.jpg`,
+      }));
 
-      setShowPreview(true);
-      setThumbnailUrl(thumbnailUrl);
+      setThumbnails(thumbnails);
       setVideoURL("");
     } else {
-      setShowPreview(false);
-      setThumbnailUrl("");
+      setThumbnails([]);
     }
   };
 
-  const downloadImage = () => {
-    if (thumbnailUrl) {
-      const a = document.createElement("a");
-      a.href = thumbnailUrl;
-      a.download = "thumbnail.jpg"; // Specify the desired file name and extension
-
-      a.style.display = "none";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
+  const openImageInNewTab = (url) => {
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.download = "thumbnail.jpg"; // Specify the desired file name and extension
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   return (
@@ -59,24 +65,27 @@ const Index = () => {
         />
         <button
           className="btn-blue mt-2"
-          onClick={() => getYouTubeThumbnail(videoURL)}
+          onClick={() => getYouTubeThumbnails(videoURL)}
         >
-          Get Thumbnail
+          Get Thumbnails
         </button>
-        {showPreview && (
+        {thumbnails.length > 0 && (
           <div className="mt-4 p-4 bg-white rounded">
-            <img
-              src={thumbnailUrl}
-              alt="Thumbnail Preview"
-              width={320}
-              height={180}
-            />
-            <button
-              className="btn-blue mt-2"
-              onClick={downloadImage}
-            >
-              Download Thumbnail
-            </button>
+            {thumbnails.map((thumbnail, index) => (
+              <div key={index}>
+                <img
+                  src={thumbnail.url}
+                  alt={`Thumbnail ${thumbnail.resolution}`}
+                  style={{ width: "320px", height: "180px", objectFit: "cover" }}
+                />
+                <button
+                  className="btn-blue mt-2"
+                  onClick={() => openImageInNewTab(thumbnail.url)}
+                >
+                  Download {thumbnail.resolution}
+                </button>
+              </div>
+            ))}
           </div>
         )}
       </div>
